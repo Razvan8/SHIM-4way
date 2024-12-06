@@ -293,3 +293,225 @@ dummy.matrix <- function(NF = 2, NL = rep(2, NF)) {
 }
 
 
+# Define the CDF of the Continuous Bernoulli distribution
+cdf_contbern <- function(x, p) {
+  if (p == 0.5) {
+    return(x)  # For p = 0.5, the CDF is just x (uniform distribution)
+  } else {
+    B_p <- 2*p-1  # Normalizing constant
+    return(  ( (p^x*(1-p)^(1-x) +p-1) ) / B_p )  # CDF function
+  }
+}
+
+
+
+# Define the inverse CDF using numerical approximation
+inverse_cdf_contbern <- function(u, p) {
+  if (p == 0.5) {
+    return(u)  # For p = 0.5, the inverse CDF is just u (uniform distribution)
+  } else {
+    # Function to find the root of: CDF(x) - u = 0
+    cdf_eq <- function(x) cdf_contbern(x, p) - u
+    # Numerical root finding
+    return(uniroot(cdf_eq, lower = 0, upper = 1)$root)
+  }
+}
+
+# Sampling function from Continuous Bernoulli distribution using inverse transform sampling
+sample_contbern <- function(p) {
+  n <- length(p)  # Number of samples to generate, one for each probability
+  u <- runif(n)  # Generate uniform random samples
+  samples <- mapply(inverse_cdf_contbern, u, p)  # Apply inverse CDF for each p
+  return(samples)
+}
+
+# Example usage:
+#p <- 0.2  # Set the parameter p for Continuous Bernoulli distribution
+#n_samples <- 10000  # Number of samples to generate
+#samples <- sample_contbern(p, n_samples)
+
+# Visualize the histogram of the samples
+#hist(samples, probability = TRUE, breaks = 20, main = paste("Samples from Continuous Bernoulli (p =", p, ")"))
+
+
+
+##################### CREATE BASIC 4 way #################################3
+set.seed(111)
+create_basic_GLM_4way <- function() {
+  set.seed(111)
+  x.4w <- dummy.matrix(NF = 4, NL = c(5, 4, 3,2))
+  l1=4
+  l2=3
+  l3=2
+  l4=1
+  
+  # Hierarchical Coefficients (2way)
+  p.4w <- ncol(x.4w)
+  n.4w <- p.4w + 1
+  beta.min <- 1
+  beta.max <- 10
+  beta.true <- data.frame(rep(0, n.4w))
+  rownames(beta.true) <- c("interc", colnames(x.4w))
+  colnames(beta.true) <- c("coeffs")
+  beta.true$coeffs <-
+    runif(n.4w, beta.min, beta.max) * sample(c(1, -1), size = n.4w, replace =
+                                               TRUE)
+  
+  ################# MAKE COLS IN GOOD ORDER #############
+  
+  col_mains <- colnames(x.4w)[c(1:(l1 + l2 + l3+l4))]
+  #print(col_mains)
+  col_theta_good <- c()
+  for (i in c(1:l1)) {
+    for (j in c(1:l2)) {
+      # Create the string and append to the vector
+      col_theta_good <- c(col_theta_good, paste0("A.", i, ":B.", j))
+    }
+    for (k in c(1:l3))
+    {
+      col_theta_good <- c(col_theta_good, paste0("A.", i, ":C.", k))
+    }
+    for (l in c(1:l4))
+    {
+      col_theta_good <- c(col_theta_good, paste0("A.", i, ":D.", l))
+    }
+  }
+  for (j in c(1:l2))
+  {
+    for (k in c(1:l3))
+    {
+      col_theta_good <- c(col_theta_good, paste0("B.", j, ":C.", k))
+    }
+    for (l in c(1:l4))
+    {
+      col_theta_good <- c(col_theta_good, paste0("B.", j, ":D.", l))
+    }
+  }
+  
+  for (k in c(1:l3))
+  {for (l in c(1:l4)){
+    col_theta_good <- c(col_theta_good, paste0("C.", k, ":D.", l))
+  }}
+  
+  
+  
+  
+  col_psi_good<-c()
+  for (i in c(1:l1)) {
+    for (j in c(1:l2)) {
+      
+      # Create the string and append to the vector
+      for (k in c(1:l3))
+      {col_psi_good <- c(col_psi_good, paste0("A.", i, ":B.", j, ":C.", k))
+      }
+      
+      for (l in c(1:l4))
+      {col_psi_good <- c(col_psi_good, paste0("A.", i, ":B.", j, ":D.", l))
+      }}
+    
+    for (k in c(1:l3)){
+      for (l in c(1:l4)){
+        col_psi_good <- c(col_psi_good, paste0("A.", i, ":C.", k, ":D.", l))
+      }
+    }
+    
+    }
+  
+  
+    
+   
+
+  
+  for (j in c(1:l2)) {
+    for (k in c(1:l3)){
+      for (l in c(1:l4)){
+        col_psi_good <- c(col_psi_good, paste0("B.", j, ":C.", k, ":D.", l))
+      }
+    }
+  }
+  
+  
+  print(col_psi_good)
+  
+  col_phi_good<-c()
+  for (i in c(1:l1)) {
+    for (j in c(1:l2)) {
+      for (k in c(1:l3))
+      {for (l in c(1:l4))
+      {col_phi_good <- c(col_phi_good, paste0("A.",i, ":B.", j, ":C.", k, ":D.", l))
+      }
+      
+    }}}
+  
+  
+  
+  #print(col_theta_good)
+  col_all_good = c(col_mains, col_theta_good, col_psi_good, col_phi_good)
+  print(col_all_good)
+  print(colnames(x.4w))
+  x.4w<-x.4w[,col_all_good]
+  
+  rownames(beta.true) <- c("interc", colnames(x.4w))
+  colnames(beta.true) <- c("coeffs")
+  
+  
+  ##########################################################
+  
+  
+  
+  levs.true <-
+    c(
+      "interc",
+      "A.1",
+      "A.2",
+      "B.1",
+      "B.2",
+      "C.1",
+      "D.1",
+      "A.1:B.1",
+      "A.1:B.2",
+      "A.2:B.1",
+      "A.2:B.2",
+      "A.1:C.1",
+      "A.1:D.1",
+      "B.1:C.1",
+      "B.1:D.1",
+      "B.2:C.1",
+      "B.2:D.1",
+      "C.1:D.1",
+      "A.1:B.1:C.1",
+      "A.1:B.1:D.1",
+      "A.1:C.1:D.1",
+      "B.1:C.1:D.1",
+      "A.1:B.2:C.1",
+      "A.1:B.2:D.1",
+      "B.2:C.1:D.1",
+      "A.1:B.1:C.1:D.1",
+      "A.1:B.2:C.1:D.1"
+    )
+  
+  beta.true$coeffs[which(!is.element(rownames(beta.true), levs.true))] <-
+    0
+  #beta.true
+  
+  # Response vector (2way)
+  sigma.y <- 3
+  y.4w <- data.frame(row.names = rownames(x.4w))
+  eta=beta.true$coeffs[1] + as.matrix(x.4w) %*% as.vector(beta.true$coeffs)[-1]
+  prob=exp(eta)/(exp(eta)+1)
+  y.4w$obs <- sample_contbern(p=prob)
+  y.4w$true <-kappa1(beta.true$coeffs[1] + as.matrix(x.4w) %*% as.vector(beta.true$coeffs)[-1]) #get bern
+  
+  if (all(rownames(beta.true)[-1] == colnames(x.4w)) == TRUE)
+  {
+    print("Data loaded properly")
+  }
+  
+  return(list(
+    'X' = as.matrix(x.4w),
+    'y' = y.4w,
+    'beta' = beta.true
+  ))
+}
+
+

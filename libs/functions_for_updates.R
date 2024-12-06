@@ -1,7 +1,8 @@
 
-
 source("Combinatorics.R")
 source("Create_synthetic_datasets.R")
+library(glmnet)
+
 
 Soft_thresholding <- function(c, lambda) {
   assert <- function(condition, message) {
@@ -250,9 +251,9 @@ irlasso.cb <- function(X, Y, lambda, w.lambda=NULL, beta0=NULL,
 
 
 
-X<-dummy.matrix(NF = 4, NL = rep(2, 4)) 
-X<-as.matrix(X)  
-beta_main<-c(1,2,3,4) 
+#X<-dummy.matrix(NF = 4, NL = rep(2, 4)) 
+#X<-as.matrix(X)  
+#beta_main<-c(1,2,3,4) 
 mains_contribution<-function(X, beta_main, l1=21,l2=14,l3=2,l4=3)
 { range_main<-unlist(get_ranges4(l1,l2,l3,l4)[1])
 mains_contrib<-X[,range_main]%*%beta_main
@@ -297,7 +298,7 @@ four_ways_contribution<-function(X, tau_vec, beta_vec_4way,l1=21,l2=14,l3=2,l4=3
   range_4ways<-unlist(get_ranges4(l1,l2,l3,l4)[4])
   print(range_4ways)
   print(X[,range_4ways])
-  four_ways_contrib<-(X[,range_4ways]%*%matrix(beta_vec_4way, ncol = 1))*tau_vec ##last multiplication should be elementwise
+  four_ways_contrib<-(X[,range_4ways]%*%  (matrix(tau_vec, ncol=1) *matrix(beta_vec_4way, ncol = 1)) ) ##last multiplication should be elementwise
   return(four_ways_contrib)} ################    CHECK IF NEEDED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #beta_vec_4way<-get_beta_vec_4way4(beta_vec_3way, tau=1, l1=1, l2=1, l3=1, l4=1)
@@ -319,13 +320,76 @@ tau_vec<-array(1, dim=length(tau_vec))}
 v<-mains_contribution(X=X, beta_main = beta_main, l1=l1, l2=l2, l3=l3, l4=l4) + 
   two_ways_contribution(X=X, gamma_vec=gamma_vec, beta_vec_2way=beta_2way,l1=l1, l2=l2, l3=l3, l4=l4, already_multiplied = FALSE)+
   three_ways_contribution(X=X, delta_vec = delta_vec, beta_vec_3way = beta_3way,l1=l1, l2=l2, l3=l3, l4=l4, already_multiplied = FALSE)+
-  four_ways_contribution<-function(X=X, tau_vec=tau_vec, beta_vec_4way=beta_4way,l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=FALSE) 
+  four_ways_contribution(X=X, tau_vec=tau_vec, beta_vec_4way=beta_4way,l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=FALSE) 
     
 result<-kappa1(v)
 #cat("g:", result[1:10])
 return(result)
 }
 
-g_bern(X, beta=c(beta_main, beta_2way, beta_vec_3way, beta_vec_4way),
-       gamma_vec=beta_2way, delta_vec=beta_vec_3way, tau_vec=beta_vec_4way, l1=1,l2=1,l3=1,l4=1, already_multiplied=TRUE)
+#g_bern(X, beta=c(beta_main, beta_2way, beta_vec_3way, beta_vec_4way),
+ #      gamma_vec=beta_2way, delta_vec=beta_vec_3way, tau_vec=beta_vec_4way, l1=1,l2=1,l3=1,l4=1, already_multiplied=TRUE)
+
+
+##penalty for 1 vector
+get_penalty<-function(vector, weights, lambda, already_weighted=TRUE){
+  result=lambda*sum(abs(vector)*abs(weights))
+  return(result)
+}
+
+
+
+########### Q BERN FUNCTION #####################
+
+Q_bern<-function(X,y, beta, gamma_vec, delta_vec, tau_vec, lambda_beta, lambda_gamma, lambda_delta, lambda_tau, w_beta, w_gamma, w_delta, w_tau,
+                 l1=21,l2=14,l3=2,l4=3, already_multiplied=TRUE, scaled=TRUE, intercept=0)
+{ if (length(beta)== l1 +l2+l3+l4)
+{print("Beta was given only main and computed for the rest")
+  already_multiplied = TRUE
+  beta_2way<-get_beta_vec_2way4(beta = beta, l1=l1, l2=l2, l3=l3, l4=l4, gamma= gamma_vec, only_beta = FALSE )
+  beta_3way<-get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta = delta_vec, only_beta = FALSE)
+  beta_4way<-get_beta_vec_4way4(beta_3way=beta_3way, tau=tau_vec, l1=l1, l2=l2, l3=l3, l4=l4, only_beta = FALSE)
+  beta<-c(beta, beta_2way,beta_3way, beta_4way)}
+  #should be before making it 1
+  penalty_beta<-get_penalty(vector=beta[unlist(get_ranges4(l1,l2,l3,l4)[1])], weights=w_beta, lambda = lambda_beta  )
+  penalty_gamma<-get_penalty(vector=gamma_vec, weights=w_gamma, lambda = lambda_gamma )
+  penalty_delta<-get_penalty(vector=delta_vec, weights=w_delta, lambda = lambda_delta )
+  penalty_tau<-get_penalty(vector=tau_vec, weights=w_tau, lambda = lambda_tau )
+  
+  if (already_multiplied ==TRUE)
+  {gamma_vec<-array(1, dim=length(gamma_vec))
+  delta_vec<-array(1, dim=length(delta_vec))
+  tau_vec<-array(1, dim=length(tau_vec))}
+  
+  
+  #def log like: sum(y*(Xbeta)-k(Xbeta))
+  #v=g_normal(X=X, beta=beta, gamma_vec = gamma_vec, delta_vec = delta_vec, l1=l1, l2=l2, l3=l3, already_multiplied = already_multiplied) #Xbeta
+  v=X%*%beta+intercept
+  print(y)
+  print(v)
+  log.like<-sum(y*v-kappa0(v))
+  if(scaled==TRUE) ############# CHECK THIS ###########################
+  {log.like<-log.like/(2*dim(X)[1])}
+  loss<- -log.like+penalty_beta+penalty_gamma+penalty_delta+penalty_tau
+  cat("log.like,", log.like, '  ',penalty_beta,' ',penalty_gamma,' ',penalty_delta, ' ', penalty_tau )
+  return(loss)
+}
+
+
+#y=matrix(c(0.9999999,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4), ncol=1)
+#y=matrix(1, ncol=1, nrow = 16)
+#beta=c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+#gamma_vec<-c(1,1,1,1,1,1)
+#delta_vec<-c(1,1,1,1)
+#tau_vec<-c(1)
+#lambda_beta<-2
+#lambda_gamma<-2
+#lambda_delta<-2
+#lambda_tau<-2
+#intercept<-10000
+
+#Q_bern(X=X,y=y, beta=beta, gamma_vec, delta_vec, tau_vec, lambda_beta=lambda_beta, lambda_gamma=lambda_gamma, lambda_delta = lambda_delta, 
+ #      lambda_tau=lambda_tau, w_beta=1, w_gamma=1, w_delta=1, w_tau=1,l1=1,l2=1,l3=1,l4=1, already_multiplied=TRUE, scaled=TRUE, intercept=intercept )
+
+
 

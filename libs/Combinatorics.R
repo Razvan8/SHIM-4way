@@ -1,5 +1,5 @@
 
-source(file.path(libs_path,"helper_functions.R"))
+source("helper_functions.R")
 
 
 assert <- function(condition, message) {
@@ -7,7 +7,7 @@ assert <- function(condition, message) {
 }
 
 
-get_range4<- function(x,l1=21,l2=14,l3=2,l4=3) #returns the inddices from the range of x
+get_range4<- function(x,l1=21,l2=14,l3=2,l4=3) #returns the indices from the range of x
 { assert(x<=l1+l2+l3+l4, "x should be in correct range")
   if (x<=l1)
 {return(c(1:l1))}
@@ -33,7 +33,7 @@ range_phi<-c( (l_main + l_theta + l_psi+1): (l_main + l_theta + l_psi + l_phi))
 
 return(list(range_main, range_theta, range_psi, range_phi))}
 
-print(get_ranges4(l1=2,l2=1,l3=2,l4=3))
+#print(get_ranges4(l1=2,l2=1,l3=2,l4=3))
 
 
 #################### FUNCTIONS 2-way combinatorics ################################
@@ -117,7 +117,7 @@ return(Theta_hat)
 }
 
 
-get_theta_from_theta_vec_2way4(vec_theta = c(1,1,1,1,10,10,10,10,2,2,2,3,3),l1=2,l2=1, l3=1, l4=2)
+#get_theta_from_theta_vec_2way4(vec_theta = c(1,1,1,1,10,10,10,10,2,2,2,3,3),l1=2,l2=1, l3=1, l4=2)
 
 
 
@@ -150,7 +150,7 @@ if( all ( range_x == c( (l1+l2+1): (l1+l2+l3) ) ) == TRUE )  #cd
 return(position_vector)
 }
 
-get_position_vec_from_theta_matrix4(c(22,36))
+#get_position_vec_from_theta_matrix4(c(22,36))
 
 
 get_beta_vec_2way4<-function(beta,l1,l2,l3,l4, gamma, only_beta = FALSE) #beta is beta_main
@@ -183,7 +183,7 @@ if (only_beta==FALSE)
 return(beta_vec2way)
 }
 
-get_beta_vec_2way4(beta=c(1,2,3,4, 5), gamma=1, l1=1, l2=1, l3=1, l4=2)
+#get_beta_vec_2way4(beta=c(1,2,3,4, 5), gamma=1, l1=1, l2=1, l3=1, l4=2)
 
 
 #gets ls of positions in vector form  from ls positions in matrix
@@ -194,7 +194,7 @@ get_positions_2way4<-function(ls_positions,l1=21,l2=14,l3=2,l4=3){
   all_positions<-c(all_positions, pos)}
   return(all_positions)}
 
-x<-get_positions_2way4(ls_positions=list(c(1,22), c(36,38)),l1=21,l2=14,l3=2,l4=3)
+#x<-get_positions_2way4(ls_positions=list(c(1,22), c(36,38)),l1=21,l2=14,l3=2,l4=3)
 
 
 
@@ -296,8 +296,8 @@ get_psi_vec4<-function(psi, l1=21,l2=14,l3=2,l4=3)
   return(psi_vec)
 }
 
-psi=array(1, dim = c(4, 4, 4))
-dim(psi)
+#psi=array(1, dim = c(4, 4, 4))
+#dim(psi)
 #get_psi_vec4(psi, l1=1, l2=1, l3=1 , l4=1)
 
 #get psi table from psi_vec 
@@ -320,9 +320,8 @@ for (i in range1) {
       psi[j,i,k]<-psi_vec[counter]
       psi[j,k,i]<-psi_vec[counter]
       counter<-counter+1
-    }}} 
-
-for (i in range1) { 
+    }}
+  
   for (j in range3 ) { 
     for (k in range4 ) { 
       #cat("i:", i, ", j:", j, ", k:", k ,'\n')
@@ -333,7 +332,12 @@ for (i in range1) {
       psi[j,i,k]<-psi_vec[counter]
       psi[j,k,i]<-psi_vec[counter]
       counter<-counter+1
-    }}} 
+    }}
+  
+  } 
+
+
+  
 
 for (i in range2) { 
   for (j in range3 ) { 
@@ -370,21 +374,25 @@ for (i in range1){ #ab c/d
   for (j in range2 ){
     for (k in c(range3, range4) ){
       
-        beta_vec3way[counter]<-beta_2way[get_position_vec_from_theta_matrix4(position_tuple = c(i,j),l1=l1,l2=l2,l3=l3)]*
+        beta_vec3way[counter]<-beta_2way[get_position_vec_from_theta_matrix4(position_tuple = c(i,j),l1=l1,l2=l2,l3=l3,l4=l4)]*
         beta_2way[get_position_vec_from_theta_matrix4(position_tuple = c(i,k),l1=l1,l2=l2,l3=l3, l4=l4)]*
         beta_2way[get_position_vec_from_theta_matrix4(position_tuple = c(j,k),l1=l1,l2=l2,l3=l3, l4=l4)]
       
-      counter<-counter+1}}}
-
-for (i in range1){ #acd 
+      counter<-counter+1}}
+  
+  
   for (j in range3 ){
     for (k in  range4 ){
       
-      beta_vec3way[counter]<-beta_2way[get_position_vec_from_theta_matrix4(position_tuple = c(i,j),l1=l1,l2=l2,l3=l3)]*
+      beta_vec3way[counter]<-beta_2way[get_position_vec_from_theta_matrix4(position_tuple = c(i,j),l1=l1,l2=l2,l3=l3,l4=l4)]*
         beta_2way[get_position_vec_from_theta_matrix4(position_tuple = c(i,k),l1=l1,l2=l2,l3=l3, l4=l4)]*
         beta_2way[get_position_vec_from_theta_matrix4(position_tuple = c(j,k),l1=l1,l2=l2,l3=l3, l4=l4)]
       
-      counter<-counter+1}}}
+      counter<-counter+1}}
+  }
+
+
+
 
 
 for (i in range2){ #bcd 
@@ -408,7 +416,7 @@ return(beta_vec3way)
 
 }
 
-#get_beta_vec_3way4(beta_2way=c(1,1,1,1,1,1,1,1,2,2,2,3,3),l1=2,l2=1,l3=1,l4=2, delta=1, only_beta=FALSE)
+get_beta_vec_3way4(beta_2way=c(1,1,1,1,1,1,1,1,2,2,2,3,3),l1=2,l2=1,l3=1,l4=2, delta=1, only_beta=FALSE)
 
 
 
@@ -420,8 +428,8 @@ for (tuple in ls_positions)
 all_positions<-c(all_positions, pos)}
 return(all_positions)}
 
-ls_pos<-list(c(1,3,6), c(1,3,5), c(1,4,7), c(2,4,7), c(3,6,7))
-get_positions_3way4(ls_pos, l1=1, l2=2, l3=3,l4=1)
+#ls_pos<-list(c(1,3,6), c(1,3,5), c(1,4,7), c(2,4,7), c(3,6,7))
+#get_positions_3way4(ls_pos, l1=1, l2=2, l3=3,l4=1)
 
 
 
@@ -488,8 +496,8 @@ get_phi_vec4<-function(phi, l1=21,l2=14,l3=2,l4=3)
   return(phi_vec)
 }
 
-phi=array(2, dim = c(14, 14, 14, 14))
-dim(phi)
+#phi=array(2, dim = c(14, 14, 14, 14))
+#dim(phi)
 #get_phi_vec4(phi, l1=2, l2=3, l3=4 , l4=5) 
 
 
