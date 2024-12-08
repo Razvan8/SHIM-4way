@@ -296,8 +296,8 @@ four_ways_contribution<-function(X, tau_vec, beta_vec_4way,l1=21,l2=14,l3=2,l4=3
 {if (already_multiplied==TRUE)
 {tau_vec<-array(1, dim=length(tau_vec))}
   range_4ways<-unlist(get_ranges4(l1,l2,l3,l4)[4])
-  print(range_4ways)
-  print(X[,range_4ways])
+  #print(range_4ways)
+  #print(X[,range_4ways])
   four_ways_contrib<-(X[,range_4ways]%*%  (matrix(tau_vec, ncol=1) *matrix(beta_vec_4way, ncol = 1)) ) ##last multiplication should be elementwise
   return(four_ways_contrib)} ################    CHECK IF NEEDED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -365,8 +365,8 @@ Q_bern<-function(X,y, beta, gamma_vec, delta_vec, tau_vec, lambda_beta, lambda_g
   #def log like: sum(y*(Xbeta)-k(Xbeta))
   #v=g_normal(X=X, beta=beta, gamma_vec = gamma_vec, delta_vec = delta_vec, l1=l1, l2=l2, l3=l3, already_multiplied = already_multiplied) #Xbeta
   v=X%*%beta+intercept
-  print(y)
-  print(v)
+  #print(y)
+  #print(v)
   log.like<-sum(y*v-kappa0(v))
   if(scaled==TRUE) ############# CHECK THIS ###########################
   {log.like<-log.like/(2*dim(X)[1])}
@@ -390,6 +390,84 @@ Q_bern<-function(X,y, beta, gamma_vec, delta_vec, tau_vec, lambda_beta, lambda_g
 
 #Q_bern(X=X,y=y, beta=beta, gamma_vec, delta_vec, tau_vec, lambda_beta=lambda_beta, lambda_gamma=lambda_gamma, lambda_delta = lambda_delta, 
  #      lambda_tau=lambda_tau, w_beta=1, w_gamma=1, w_delta=1, w_tau=1,l1=1,l2=1,l3=1,l4=1, already_multiplied=TRUE, scaled=TRUE, intercept=intercept )
+
+
+
+
+
+
+minimizer_Q_bern_delta<-function(X,y, C, lambda, beta_old, weight=1, scaled=TRUE) #function to find the minimum for 1D beta update # interval should depend on old beta/gamma
+{
+  
+  fct<-function(b)
+  {#penalty<-get_penalty(vector=c(b), weights = c(weight), lambda=lambda)
+    penalty<-abs(b)*lambda*weight
+    v= X*b+C ##minimize for kappa1(Xbeta+C) =y
+    #cat(" X:", X,  " b: ", b,  " C" , C," v: ",v  )
+    log.like<-sum(y*v-kappa0(v)) 
+    if(scaled==TRUE) ############# CHECK THIS ###########################
+    {log.like<-log.like/(2*length(X))}
+    loss<- -log.like+penalty
+    #cat("fct: log, pen: ", log.like, " ", penalty)
+    #cat("loss", loss)
+    return(loss)
+  }
+  #fct(1)
+  interval<-c(min(-beta_old/2 -1e-1, 5*beta_old/2 -1e-1), max(-beta_old/2 +1e-1, 5*beta_old/2 + 1e-1 ) )
+  #cat("interval",interval)
+  result_optimize <- optimize(fct, interval = interval )
+  minimum<-result_optimize$minimum
+  cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
+  
+  f_0<-fct(0)
+  if ( f_0 <= fct(minimum) & f_0 <=fct(beta_old))
+  {return(0)}
+  
+  if (fct(beta_old)<=fct(minimum))
+  { print("gamma_old was kept - inside minimizing  ")
+    return(beta_old)}
+  
+  return(minimum)
+}
+
+
+
+minimizer_Q_bern_gamma<-function(X,Z,y, C, lambda, beta_old, weight=1, scaled=TRUE) #function to find the minimum for 1D beta update # interval should depend on old beta/gamma
+{
+  
+  fct<-function(b)
+  {#penalty<-get_penalty(vector=c(b), weights = c(weight), lambda=lambda)
+    penalty<-abs(b)*lambda*weight
+    v= X*b+ Z*(b^2)+C ##minimize for kappa1(Xbeta+C) =y
+    #cat(" X:", X,  " b: ", b,  " C" , C," v: ",v  )
+    log.like<-sum(y*v-kappa0(v)) 
+    if(scaled==TRUE) ############# CHECK THIS ###########################
+    {log.like<-log.like/(2*length(X))}
+    loss<- -log.like+penalty
+    #cat("fct: log, pen: ", log.like, " ", penalty)
+    #cat("loss", loss)
+    return(loss)
+  }
+  #fct(1)
+  interval<-c(min(-beta_old/2 -1e-1, 5*beta_old/2 -1e-1), max(-beta_old/2 +1e-1, 5*beta_old/2 + 1e-1 ) )
+  #cat("interval",interval)
+  result_optimize <- optimize(fct, interval = interval )
+  minimum<-result_optimize$minimum
+  cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
+  
+  f_0<-fct(0)
+  if ( f_0 <= fct(minimum) & f_0 <=fct(beta_old))
+  {return(0)}
+  
+  if (fct(beta_old)<=fct(minimum))
+  { print("gamma_old was kept - inside minimizing  ")
+    return(beta_old)}
+  
+  return(minimum)
+}
+
+
+
 
 
 

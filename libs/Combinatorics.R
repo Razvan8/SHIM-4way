@@ -342,7 +342,7 @@ for (i in range1) {
 for (i in range2) { 
   for (j in range3 ) { 
     for (k in range4 ) { 
-      print(counter)
+      #print(counter)
       #cat("i:", i, ", j:", j, ", k:", k ,'\n')
       psi[i,j,k]<-psi_vec[counter]
       psi[i,k,j]<-psi_vec[counter]
@@ -543,7 +543,7 @@ for (i in range1) {
       phi[l,j,k,i]<-phi_vec[counter]
       phi[l,k,i,j]<-phi_vec[counter]
       phi[l,k,j,i]<-phi_vec[counter]
-      print(phi_vec[counter])
+      #print(phi_vec[counter])
       
       counter<-counter+1
     }}} }

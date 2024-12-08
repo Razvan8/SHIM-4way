@@ -349,7 +349,7 @@ create_basic_GLM_4way <- function() {
   p.4w <- ncol(x.4w)
   n.4w <- p.4w + 1
   beta.min <- 1
-  beta.max <- 10
+  beta.max <- 5
   beta.true <- data.frame(rep(0, n.4w))
   rownames(beta.true) <- c("interc", colnames(x.4w))
   colnames(beta.true) <- c("coeffs")
