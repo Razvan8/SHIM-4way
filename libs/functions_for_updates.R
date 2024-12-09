@@ -469,5 +469,31 @@ minimizer_Q_bern_gamma<-function(X,Z,y, C, lambda, beta_old, weight=1, scaled=TR
 
 
 
+###test numerical instability
+#set.seed(123)
+#matrix <- matrix(runif(50 * 50, min = 1, max = 5), nrow = 50, ncol = 50)
+#beta<-matrix( runif(50, min=1, max=10), ncol=1)
+#vect <- matrix(array(0,dim=50), ncol=1)
+#vect1 <- matrix(array(0,dim=50), ncol=1)
+#vect2 <-matrix(array(0,dim=50), ncol=1)
+
+# Fill even positions with random values between 0.001 and 0.1
+
+#all_numbers<-c(1:50)
+#seq_not_keep<-all_numbers[all_numbers%%4 ==2]
+#seq_keep<-all_numbers[all_numbers%%4!=2]
+#vect1[seq_not_keep] <- runif(13, min = 0.0001, max = 0.1)
+#vect2[seq_not_keep] <- runif(13, min = 1, max = 10)
+#vect17<-vect1/7
+#beta_all<-beta*vect1^40*vect2^40
 
 
+
+#matrix%*%beta_all- (matrix[,seq_keep]%*%beta_all[seq_keep] + 
+                      #matrix[,seq_not_keep]%*%(beta[seq_not_keep]*vect17[seq_not_keep]^24 *7^24 * vect2[seq_not_keep]^25 ) )
+
+#sum( abs( matrix%*%beta_all- (matrix[,seq_keep]%*%beta_all[seq_keep] + 
+#                      matrix[,seq_not_keep]%*%(beta[seq_not_keep]*vect17[seq_not_keep]^40 * vect2[seq_not_keep]^40 ) *7^40 ) ) )
+
+
+#vect1^3- vect17^3*7^3
