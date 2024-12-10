@@ -468,6 +468,42 @@ minimizer_Q_bern_gamma<-function(X,Z,y, C, lambda, beta_old, weight=1, scaled=TR
 
 
 
+minimizer_Q_bern_beta<-function(X,Z,t,y, C, lambda, beta_old, weight=1, scaled=TRUE) #function to find the minimum for 1D beta update # interval should depend on old beta/gamma
+{
+  
+  fct<-function(b)
+  {#penalty<-get_penalty(vector=c(b), weights = c(weight), lambda=lambda)
+    penalty<-abs(b)*lambda*weight
+    v= X*b+ Z*(b^2)+t*(b^6)+C ##minimize for kappa1(Xbeta+C) =y
+    #cat(" X:", X,  " b: ", b,  " C" , C," v: ",v  )
+    log.like<-sum(y*v-kappa0(v)) 
+    if(scaled==TRUE) ############# CHECK THIS ###########################
+    {log.like<-log.like/(2*length(X))}
+    loss<- -log.like+penalty
+    #cat("fct: log, pen: ", log.like, " ", penalty)
+    #cat("loss", loss)
+    return(loss)
+  }
+  #fct(1)
+  interval<-c(min(-beta_old/2 -5e-1, 5*beta_old/2 -5e-1), max(-beta_old/2 +5e-1, 5*beta_old/2 + 5e-1 ) )
+  #cat("interval",interval)
+  result_optimize <- optimize(fct, interval = interval )
+  minimum<-result_optimize$minimum
+  cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
+  
+  f_0<-fct(0)
+  if ( f_0 <= fct(minimum) & f_0 <=fct(beta_old))
+  {return(0)}
+  
+  if (fct(beta_old)<=fct(minimum))
+  { print("beta old was kept - inside minimizing  ")
+    return(beta_old)}
+  
+  return(minimum)
+}
+
+
+
 
 ###test numerical instability
 #set.seed(123)
