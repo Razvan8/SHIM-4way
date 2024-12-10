@@ -413,7 +413,7 @@ minimizer_Q_bern_delta<-function(X,y, C, lambda, beta_old, weight=1, scaled=TRUE
     return(loss)
   }
   #fct(1)
-  interval<-c(min(-beta_old/2 -1e-1, 5*beta_old/2 -1e-1), max(-beta_old/2 +1e-1, 5*beta_old/2 + 1e-1 ) )
+  interval<-c(min(-beta_old/2 -5e-1, 5*beta_old/2 -5e-1), max(-beta_old/2 +5e-1, 5*beta_old/2 + 5e-1 ) )
   #cat("interval",interval)
   result_optimize <- optimize(fct, interval = interval )
   minimum<-result_optimize$minimum
@@ -449,7 +449,7 @@ minimizer_Q_bern_gamma<-function(X,Z,y, C, lambda, beta_old, weight=1, scaled=TR
     return(loss)
   }
   #fct(1)
-  interval<-c(min(-beta_old/2 -1e-1, 5*beta_old/2 -1e-1), max(-beta_old/2 +1e-1, 5*beta_old/2 + 1e-1 ) )
+  interval<-c(min(-beta_old/2 -5e-1, 5*beta_old/2 -5e-1), max(-beta_old/2 +5e-1, 5*beta_old/2 + 5e-1 ) )
   #cat("interval",interval)
   result_optimize <- optimize(fct, interval = interval )
   minimum<-result_optimize$minimum
