@@ -1,3 +1,57 @@
+
+
+# Define the function
+split_data_basic <- function(X, y, p = 0.8) {
+  set.seed(42)  # For reproducibility
+  split <- createDataPartition(y, p = p, list = FALSE)
+  
+  # Create train and test sets
+  X_train <- X[split, ]
+  X_test <- X[-split, ]
+  y_train <- y[split]
+  y_test <- y[-split]
+  
+  # Return the results as a list
+  list(X_train = X_train, y_train = y_train, X_test = X_test, y_test = y_test)
+}
+
+split_data_safe <- function(X, y, specified_columns, additional_percentage = 0.3, seed=1) {
+  
+  set.seed(seed)
+  # Ensure at least one sample with 1 from each specified column is in the training set
+  initial_train_indices <- unique(unlist(lapply(specified_columns, function(col) {
+    sample(which(X[, col] == 1), 1)
+  })))
+  print(length(initial_train_indices))
+  
+  # Randomly add some percentage of additional samples with value 1 to the training set
+  additional_indices <- setdiff((1:dim(X)[1]), initial_train_indices)
+  num_additional <- round(length(additional_indices) * additional_percentage)
+  
+  set.seed(seed)
+  additional_train_indices <- sample(additional_indices, num_additional)
+  
+  # Combine the indices to form the final train indices
+  train_indices <- unique(c(initial_train_indices, additional_train_indices))
+  
+  
+  # Combine indices to form the final train and test sets
+  
+  test_indices <- setdiff( (1:nrow(X) ), train_indices )
+  
+  # Create train and test sets
+  X_train <- X[train_indices, ]
+  X_test <- X[test_indices, ]
+  y_train <- y[train_indices]
+  y_test <- y[test_indices]
+  
+  # Return the results as a list
+  list(X_train = X_train, y_train = y_train, X_test = X_test, y_test = y_test)
+}
+
+
+
+
 dummy.matrix <- function(NF = 2, NL = rep(2, NF)) {
   # Computes dummy matrix from number of factors NF and number of levels NL
   # NF is an integer between 2 and 4
@@ -513,5 +567,192 @@ create_basic_GLM_4way <- function() {
     'beta' = beta.true
   ))
 }
+
+
+
+
+
+
+
+
+set.seed(111)
+create_basic_GLM_4way2 <- function() {
+  set.seed(111)
+  x.4w <- dummy.matrix(NF = 4, NL = c(6, 5, 4,3))
+  l1=5
+  l2=4
+  l3=3
+  l4=2
+  
+  # Hierarchical Coefficients (2way)
+  p.4w <- ncol(x.4w)
+  n.4w <- p.4w + 1
+  beta.min <- 1
+  beta.max <- 5
+  beta.true <- data.frame(rep(0, n.4w))
+  rownames(beta.true) <- c("interc", colnames(x.4w))
+  colnames(beta.true) <- c("coeffs")
+  beta.true$coeffs <-
+    runif(n.4w, beta.min, beta.max) * sample(c(1, -1), size = n.4w, replace =
+                                               TRUE)
+  
+  ################# MAKE COLS IN GOOD ORDER #############
+  
+  col_mains <- colnames(x.4w)[c(1:(l1 + l2 + l3+l4))]
+  #print(col_mains)
+  col_theta_good <- c()
+  for (i in c(1:l1)) {
+    for (j in c(1:l2)) {
+      # Create the string and append to the vector
+      col_theta_good <- c(col_theta_good, paste0("A.", i, ":B.", j))
+    }
+    for (k in c(1:l3))
+    {
+      col_theta_good <- c(col_theta_good, paste0("A.", i, ":C.", k))
+    }
+    for (l in c(1:l4))
+    {
+      col_theta_good <- c(col_theta_good, paste0("A.", i, ":D.", l))
+    }
+  }
+  for (j in c(1:l2))
+  {
+    for (k in c(1:l3))
+    {
+      col_theta_good <- c(col_theta_good, paste0("B.", j, ":C.", k))
+    }
+    for (l in c(1:l4))
+    {
+      col_theta_good <- c(col_theta_good, paste0("B.", j, ":D.", l))
+    }
+  }
+  
+  for (k in c(1:l3))
+  {for (l in c(1:l4)){
+    col_theta_good <- c(col_theta_good, paste0("C.", k, ":D.", l))
+  }}
+  
+  
+  
+  
+  col_psi_good<-c()
+  for (i in c(1:l1)) {
+    for (j in c(1:l2)) {
+      
+      # Create the string and append to the vector
+      for (k in c(1:l3))
+      {col_psi_good <- c(col_psi_good, paste0("A.", i, ":B.", j, ":C.", k))
+      }
+      
+      for (l in c(1:l4))
+      {col_psi_good <- c(col_psi_good, paste0("A.", i, ":B.", j, ":D.", l))
+      }}
+    
+    for (k in c(1:l3)){
+      for (l in c(1:l4)){
+        col_psi_good <- c(col_psi_good, paste0("A.", i, ":C.", k, ":D.", l))
+      }
+    }
+    
+  }
+  
+  
+  
+  
+  
+  
+  for (j in c(1:l2)) {
+    for (k in c(1:l3)){
+      for (l in c(1:l4)){
+        col_psi_good <- c(col_psi_good, paste0("B.", j, ":C.", k, ":D.", l))
+      }
+    }
+  }
+  
+  
+  print(col_psi_good)
+  
+  col_phi_good<-c()
+  for (i in c(1:l1)) {
+    for (j in c(1:l2)) {
+      for (k in c(1:l3))
+      {for (l in c(1:l4))
+      {col_phi_good <- c(col_phi_good, paste0("A.",i, ":B.", j, ":C.", k, ":D.", l))
+      }
+        
+      }}}
+  
+  
+  
+  #print(col_theta_good)
+  col_all_good = c(col_mains, col_theta_good, col_psi_good, col_phi_good)
+  print(col_all_good)
+  print(colnames(x.4w))
+  x.4w<-x.4w[,col_all_good]
+  
+  rownames(beta.true) <- c("interc", colnames(x.4w))
+  colnames(beta.true) <- c("coeffs")
+  
+  
+  ##########################################################
+  
+  
+  
+  levs.true <-
+    c(
+      "interc",
+      "A.1",
+      "A.2",
+      "B.1",
+      "B.2",
+      "C.1",
+      "D.1",
+      "A.1:B.1",
+      "A.1:B.2",
+      "A.2:B.1",
+      "A.2:B.2",
+      "A.1:C.1",
+      "A.1:D.1",
+      "B.1:C.1",
+      "B.1:D.1",
+      "B.2:C.1",
+      "B.2:D.1",
+      "C.1:D.1",
+      "A.1:B.1:C.1",
+      "A.1:B.1:D.1",
+      "A.1:C.1:D.1",
+      "B.1:C.1:D.1",
+      "A.1:B.2:C.1",
+      "A.1:B.2:D.1",
+      "B.2:C.1:D.1",
+      "A.1:B.1:C.1:D.1",
+      "A.1:B.2:C.1:D.1"
+    )
+  
+  beta.true$coeffs[which(!is.element(rownames(beta.true), levs.true))] <-
+    0
+  #beta.true
+  
+  # Response vector (2way)
+  sigma.y <- 3
+  y.4w <- data.frame(row.names = rownames(x.4w))
+  eta=beta.true$coeffs[1] + as.matrix(x.4w) %*% as.vector(beta.true$coeffs)[-1]
+  prob=exp(eta)/(exp(eta)+1)
+  y.4w$obs <- sample_contbern(p=prob)
+  y.4w$true <-kappa1(beta.true$coeffs[1] + as.matrix(x.4w) %*% as.vector(beta.true$coeffs)[-1]) #get bern
+  
+  if (all(rownames(beta.true)[-1] == colnames(x.4w)) == TRUE)
+  {
+    print("Data loaded properly")
+  }
+  
+  return(list(
+    'X' = as.matrix(x.4w),
+    'y' = y.4w,
+    'beta' = beta.true
+  ))
+}
+
+
 
 

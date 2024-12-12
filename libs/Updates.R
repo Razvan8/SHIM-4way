@@ -6,7 +6,6 @@ update_tau<-function(X, y, beta_hat, gamma_hat, delta_hat, tau_hat, lambda_tau,l
 {beta_2way <- get_beta_vec_2way4(beta = beta_hat, l1=l1, l2=l2, l3=l3, l4=l4, gamma=gamma_hat, only_beta = FALSE) ###This is with delta
 beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with delta
 beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = TRUE) #This is  WITHOUT tau
-print('aaaaaaaaaaa')
 y_tilde<-y ### IT IS Y IN GLM CASE
 X_4way<-X[,unlist(get_ranges4(l1,l2,l3,l4)[4])]
 if (var(beta_4way)==0) #lasso does not work if predictor has variance 0
@@ -23,19 +22,19 @@ X_tilde<-cbind(X_tilde,C)#add C to X_tilde
 tau_hat_old<-tau_hat
 beta0<-0*tau_hat#init beta 0 good
 beta0<-c(beta0,1)
-print('bbb')
+#print('bbb')
 Q_old <- Q_bern(X=X,y=y, beta=beta_hat, gamma_vec=gamma_hat, delta_vec=delta_hat, tau_vec = tau_hat,
                 lambda_beta=0, lambda_gamma=0, lambda_delta=0, lambda_tau = lambda_tau, 
                 w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3, l4=l4, already_multiplied=TRUE, intercept = intercept)
 
-print("ccc")
+#print("ccc")
 if (bind_C==TRUE){
   lasso_rez<-irlasso.cb(X=X_tilde, Y=y_tilde, lambda=lambda_tau, w.lambda=NULL, beta0=beta0,
                         centering=FALSE, scaling=FALSE, intercept=F,
                         maxit=10, tol=0.0545, sd.tol=1e-6,
                         verbose=F)
   lasso_coef <- array(lasso_rez$BETA, dim= length(lasso_rez$BETA) )
-  cat("lasso coef: ", lasso_coef)
+  #cat("lasso coef: ", lasso_coef)
   tau_hat<- lasso_coef[-length(lasso_coef)]# last is coef for all other factors including intercept
 }
 #drop last col which is C and use glm with offset term
@@ -50,7 +49,7 @@ else{
 Q_new <- Q_bern(X=X,y=y, beta=beta_hat, gamma_vec=gamma_hat, delta_vec=delta_hat, tau_vec=tau_hat,
                 lambda_beta=0, lambda_gamma=0, lambda_delta=0, lambda_tau = lambda_tau,
                 w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
-cat(" try tau: new- old: ", Q_new -Q_old)
+#cat(" try tau: new- old: ", Q_new -Q_old)
 
 if ( Q_new-Q_old >abs(Q_old)*1e-5){
   tau_hat<-tau_hat_old
@@ -73,14 +72,14 @@ update_intercept<-function(X, y, beta_all, intercept_old) #function to find the 
   fctint<-function(intercept)
   {
     v= as.matrix(X%*%beta_all+ intercept) ##minimize for kappa1(Xbeta+C) =y
-    #cat(" X:", X,  " b: ", b,  " C" , C," v: ",v  )
+    ##cat(" X:", X,  " b: ", b,  " C" , C," v: ",v  )
     log.like<-sum(y*v-kappa0(v)) 
     loss<- -log.like #scale does not matter
     return(loss)
   }
   #fct(1)
   interval<-c(min(-intercept_old/2 -7, 5*intercept_old/2 -7), max(-intercept_old/2 +7, 5*intercept_old/2 + 7 ) )
-  #cat("interval",interval)
+  ##cat("interval",interval)
   result_optimize <- optimize(fctint, interval = interval )
   minimum<-result_optimize$minimum
   f_0<-fctint(0)
@@ -129,14 +128,14 @@ for(i in range1){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    print(length(beta_all))
+    #print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
     y_tilde<-y
     two_ways<-X_2way[,get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[i]*beta_hat[j]
     three_ways=0
-    #print("ok")
+    ##print("ok")
    
     for (k in c(range3, range4)) #compute 3 ways contrib
     {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
@@ -173,7 +172,7 @@ for(i in range1){
     
    C<- intercept + X_main%*%beta_hat+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
      X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
-   # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+   # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
 
     
    #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
@@ -191,10 +190,10 @@ for(i in range1){
     
     #############USE MINIMZER Q_BERN_GAMMA ##################
    gamma_old_value<-gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)]
-   #print("C")
+   ##print("C")
    gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
             X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
-   #print("C1") 
+   ##print("C1") 
    #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
      #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
     
@@ -202,7 +201,7 @@ for(i in range1){
    beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
    beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
    beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-   #print(length(beta_all))
+   ##print(length(beta_all))
    beta_all<- matrix(beta_all, ncol=1)
    eta<-X%*%beta_all + intercept
    
@@ -211,8 +210,8 @@ for(i in range1){
                     w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
     
     #if (Q_new-Q_old >=0)
-    #cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
-   print(Q_new-Q_old) ##it should be already negative or 0
+    ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+   #print(Q_new-Q_old) ##it should be already negative or 0
     
     if ( Q_new-Q_old >abs(Q_old)*1e-2){
       print("There might be numerical instability in update gamma.")
@@ -237,14 +236,14 @@ for(i in range1){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    print(length(beta_all))
+    #print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
     y_tilde<-y
     two_ways<-X_2way[,get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[i]*beta_hat[k]
     three_ways=0
-    #print("ok")
+    ##print("ok")
     
     for (j in range2) #compute 3 ways ijk
     {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
@@ -288,7 +287,7 @@ for(i in range1){
     
     C<- intercept + X_main%*%beta_hat+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
       X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
-    # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+    # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
     
     
     #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
@@ -306,10 +305,10 @@ for(i in range1){
     
     #############USE MINIMZER Q_BERN_GAMMA ##################
     gamma_old_value<-gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2, l3=l3, l4=l4)]
-    #print("C")
+    ##print("C")
     gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
       X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
-    #print("C1") 
+    ##print("C1") 
     #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
     #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
     
@@ -317,7 +316,7 @@ for(i in range1){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    #print(length(beta_all))
+    ##print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
@@ -326,8 +325,8 @@ for(i in range1){
                     w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
     
     #if (Q_new-Q_old >=0)
-    #cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
-    print(Q_new-Q_old) ##it should be already negative or 0
+    ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+    #print(Q_new-Q_old) ##it should be already negative or 0
     
     if ( Q_new-Q_old >abs(Q_old)*1e-2){
       print("There might be numerical instability in update gamma.")
@@ -354,14 +353,14 @@ for(i in range1){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    print(length(beta_all))
+    #print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
     y_tilde<-y
     two_ways<-X_2way[,get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[i]*beta_hat[l]
     three_ways=0
-    #print("ok")
+    ##print("ok")
     
     for (j in range2) #compute 3 ways ijk
     {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j]*beta_hat[l])^2*
@@ -405,7 +404,7 @@ for(i in range1){
     
     C<- intercept + X_main%*%beta_hat+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
       X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
-    # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+    # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
     
     
     #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
@@ -423,10 +422,10 @@ for(i in range1){
     
     #############USE MINIMZER Q_BERN_GAMMA ##################
     gamma_old_value<-gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2, l3=l3, l4=l4)]
-    #print("C")
+    ##print("C")
     gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
       X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
-    #print("C1") 
+    ##print("C1") 
     #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
     #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
     
@@ -434,7 +433,7 @@ for(i in range1){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    #print(length(beta_all))
+    ##print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
@@ -443,8 +442,8 @@ for(i in range1){
                     w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
     
     #if (Q_new-Q_old >=0)
-    #cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
-    print(Q_new-Q_old) ##it should be already negative or 0
+    ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+    #print(Q_new-Q_old) ##it should be already negative or 0
     
     if ( Q_new-Q_old >abs(Q_old)*1e-2){
       print("There might be numerical instability in update gamma.")
@@ -470,14 +469,14 @@ for(j in range2){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    print(length(beta_all))
+    #print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
     y_tilde<-y
     two_ways<-X_2way[,get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[j]*beta_hat[k]
     three_ways=0
-    #print("ok")
+    ##print("ok")
     
     for (i in range1) #compute 3 ways ijk
     {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
@@ -521,7 +520,7 @@ for(j in range2){
     
     C<- intercept + X_main%*%beta_hat+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
       X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
-    # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+    # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
     
     
     #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
@@ -539,10 +538,10 @@ for(j in range2){
     
     #############USE MINIMZER Q_BERN_GAMMA ##################
     gamma_old_value<-gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2, l3=l3, l4=l4)]
-    #print("C")
+    ##print("C")
     gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
       X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
-    #print("C1") 
+    ##print("C1") 
     #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
     #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
     
@@ -550,7 +549,7 @@ for(j in range2){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    #print(length(beta_all))
+    ##print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
@@ -559,8 +558,8 @@ for(j in range2){
                     w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
     
     #if (Q_new-Q_old >=0)
-    #cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
-    print(Q_new-Q_old) ##it should be already negative or 0
+    ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+    #print(Q_new-Q_old) ##it should be already negative or 0
     
     if ( Q_new-Q_old >abs(Q_old)*1e-2){
       print("There might be numerical instability in update gamma.")
@@ -585,14 +584,14 @@ for(j in range2){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    print(length(beta_all))
+    #print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
     y_tilde<-y
     two_ways<-X_2way[,get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[j]*beta_hat[l]
     three_ways=0
-    #print("ok")
+    ##print("ok")
     
     for (i in range1) #compute 3 ways ijl
     {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j]*beta_hat[l])^2*
@@ -636,7 +635,7 @@ for(j in range2){
     
     C<- intercept + X_main%*%beta_hat+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
       X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
-    # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+    # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
     
     
     #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
@@ -654,10 +653,10 @@ for(j in range2){
     
     #############USE MINIMZER Q_BERN_GAMMA ##################
     gamma_old_value<-gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2, l3=l3, l4=l4)]
-    #print("C")
+    ##print("C")
     gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
       X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
-    #print("C1") 
+    ##print("C1") 
     #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
     #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
     
@@ -665,7 +664,7 @@ for(j in range2){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    #print(length(beta_all))
+    ##print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
@@ -674,8 +673,8 @@ for(j in range2){
                     w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
     
     #if (Q_new-Q_old >=0)
-    #cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
-    print(Q_new-Q_old) ##it should be already negative or 0
+    ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+    #print(Q_new-Q_old) ##it should be already negative or 0
     
     if ( Q_new-Q_old >abs(Q_old)*1e-2){
       print("There might be numerical instability in update gamma.")
@@ -698,14 +697,14 @@ for(k in range3){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    print(length(beta_all))
+    #print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
     y_tilde<-y
     two_ways<-X_2way[,get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[k]*beta_hat[l]
     three_ways=0
-    #print("ok")
+    ##print("ok")
     
     for (i in range1) #compute 3 ways ijl
     {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[k]*beta_hat[l])^2*
@@ -749,7 +748,7 @@ for(k in range3){
     
     C<- intercept + X_main%*%beta_hat+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
       X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
-    # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+    # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
     
     
     #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
@@ -767,10 +766,10 @@ for(k in range3){
     
     #############USE MINIMZER Q_BERN_GAMMA ##################
     gamma_old_value<-gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2, l3=l3, l4=l4)]
-    #print("C")
+    ##print("C")
     gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
       X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
-    #print("C1") 
+    ##print("C1") 
     #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
     #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
     
@@ -778,7 +777,7 @@ for(k in range3){
     beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
     beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
     beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-    #print(length(beta_all))
+    ##print(length(beta_all))
     beta_all<- matrix(beta_all, ncol=1)
     eta<-X%*%beta_all + intercept
     
@@ -787,8 +786,8 @@ for(k in range3){
                     w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
     
     #if (Q_new-Q_old >=0)
-    #cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
-    print(Q_new-Q_old) ##it should be already negative or 0
+    ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+    #print(Q_new-Q_old) ##it should be already negative or 0
     
     if ( Q_new-Q_old >abs(Q_old)*1e-2){
       print("There might be numerical instability in update gamma.")
@@ -825,7 +824,7 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
   if (w==1)
   {w=array(1, dim=length(delta_hat))}
   
-  
+  print("delta ijk")
   ###range1, range2
   for(i in range1){
     for (j in range2){
@@ -836,20 +835,20 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
       beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
       beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
       beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-      print(length(beta_all))
+      #print(length(beta_all))
       beta_all<- matrix(beta_all, ncol=1)
       eta<-X%*%beta_all + intercept
       
       y_tilde<-y
       three_ways=0
-      #print("ok")
+      ##print("ok")
       three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
         gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
         gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
         gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)]
       discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4)) #actually just one
       assert(length(discard_from_c_3way ==1), "should discard only one three way in update delta")
-      #cat("discard fromm C 3 way", discard_from_c_3way, " ;")
+      ##cat("discard fromm C 3 way", discard_from_c_3way, " ;")
       
       discard_from_c_4way<-c()
       four_ways=0
@@ -868,8 +867,8 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
         (beta_hat[k]*beta_hat[l])^6
       discard_from_c_4way<-c(discard_from_c_4way,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
       
-      #print("X(beta - decomposed beta for 3way)")
-      #print(beta_3way[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]-(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
+      ##print("X(beta - decomposed beta for 3way)")
+      ##print(beta_3way[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]-(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
               #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
               #gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
               #gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
@@ -881,7 +880,7 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
       }
       
       
-      #cat("ITER: ", i,j,k, " ;")
+      ##cat("ITER: ", i,j,k, " ;")
       
     
       X_tilde<- three_ways + four_ways
@@ -890,15 +889,15 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
       #- Z_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)]^2
       C<- X_main%*%beta_hat+X_2way%*%beta_2way+
       +X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] +intercept
-      # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+      # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
        # if (max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) ))>1e-1){
 
-      #cat("eta-C", eta-C, dim(matrix(X_3way[,discard_from_c_3way], ncol=1)) )
-      #print("max eta-C-X_tilde*delta")
-      #print(max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) )) )
-      #print("max eta-C-3ways*delta -4ways*delta")
-      #print("max beta separated")
-      #print(max(abs(eta-(C+matrix(X_3way[,discard_from_c_3way], ncol=1)*beta_3way[discard_from_c_3way]+
+      ##cat("eta-C", eta-C, dim(matrix(X_3way[,discard_from_c_3way], ncol=1)) )
+      ##print("max eta-C-X_tilde*delta")
+      ##print(max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) )) )
+      ##print("max eta-C-3ways*delta -4ways*delta")
+      ##print("max beta separated")
+      ##print(max(abs(eta-(C+matrix(X_3way[,discard_from_c_3way], ncol=1)*beta_3way[discard_from_c_3way]+
        #               matrix(X_4way[,discard_from_c_4way], nrow=length(eta))%*%beta_4way[discard_from_c_4way] ) ) ) )
       
         #}
@@ -940,32 +939,32 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
       
       }}}
   
-  
+  print("delta ijl")
   ############## fix i j l
   for(i in range1){
     for (j in range2){
       for(l in range4 ){    
         discard_from_c_3way<-c()
-        print("inside ijl")
+        #print("inside ijl")
         
         beta_2way <- get_beta_vec_2way4(beta = beta_hat, l1=l1, l2=l2, l3=l3, l4=l4, gamma=gamma_hat, only_beta = FALSE) ###This is with delta
         beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
         beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
         beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-        print(length(beta_all))
+        #print(length(beta_all))
         beta_all<- matrix(beta_all, ncol=1)
         eta<-X%*%beta_all + intercept
         
         y_tilde<-y
         three_ways=0
-        #print("ok")
+        ##print("ok")
         three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j]*beta_hat[l])^2*
           gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
           gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
           gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)]
         discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(i,j,l),l1=l1, l2=l2, l3=l3, l4=l4)) #actually just one
         assert(length(discard_from_c_3way ==1), "should discard only one three way in update delta")
-        #cat("discard fromm C 3 way", discard_from_c_3way, " ;")
+        ##cat("discard fromm C 3 way", discard_from_c_3way, " ;")
         
         discard_from_c_4way<-c()
         four_ways=0
@@ -984,8 +983,8 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
           (beta_hat[k]*beta_hat[l])^6
         discard_from_c_4way<-c(discard_from_c_4way,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
         
-        #print("X(beta - decomposed beta for 3way)")
-        #print(beta_3way[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]-(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
+        ##print("X(beta - decomposed beta for 3way)")
+        ##print(beta_3way[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]-(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
         #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
         #gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
         #gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
@@ -997,7 +996,7 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
         }
         
         
-        #cat("ITER: ", i,j,k, " ;")
+        ##cat("ITER: ", i,j,k, " ;")
         
         
         X_tilde<- three_ways + four_ways
@@ -1006,15 +1005,15 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
         #- Z_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)]^2
         C<- X_main%*%beta_hat+X_2way%*%beta_2way+
           +X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] +intercept
-        # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+        # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
         # if (max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) ))>1e-1){
         
-        #cat("eta-C", eta-C, dim(matrix(X_3way[,discard_from_c_3way], ncol=1)) )
-        #print("max eta-C-X_tilde*delta")
-        #print(max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) )) )
-        #print("max eta-C-3ways*delta -4ways*delta")
-        #print("max beta separated")
-        #print(max(abs(eta-(C+matrix(X_3way[,discard_from_c_3way], ncol=1)*beta_3way[discard_from_c_3way]+
+        ##cat("eta-C", eta-C, dim(matrix(X_3way[,discard_from_c_3way], ncol=1)) )
+        ##print("max eta-C-X_tilde*delta")
+        ##print(max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) )) )
+        ##print("max eta-C-3ways*delta -4ways*delta")
+        ##print("max beta separated")
+        ##print(max(abs(eta-(C+matrix(X_3way[,discard_from_c_3way], ncol=1)*beta_3way[discard_from_c_3way]+
         #               matrix(X_4way[,discard_from_c_4way], nrow=length(eta))%*%beta_4way[discard_from_c_4way] ) ) ) )
         
         #}
@@ -1063,26 +1062,26 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
     for (k in range3){
       for(l in range4 ){    
         discard_from_c_3way<-c()
-        print("inside ikl")
+        #print("inside ikl")
         
         beta_2way <- get_beta_vec_2way4(beta = beta_hat, l1=l1, l2=l2, l3=l3, l4=l4, gamma=gamma_hat, only_beta = FALSE) ###This is with delta
         beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
         beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
         beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-        print(length(beta_all))
+        #print(length(beta_all))
         beta_all<- matrix(beta_all, ncol=1)
         eta<-X%*%beta_all + intercept
         
         y_tilde<-y
         three_ways=0
-        #print("ok")
+        ##print("ok")
         three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[k]*beta_hat[l])^2*
           gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
           gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
           gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]
         discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(i,k,l),l1=l1, l2=l2, l3=l3, l4=l4)) #actually just one
         assert(length(discard_from_c_3way ==1), "should discard only one three way in update delta")
-        #cat("discard fromm C 3 way", discard_from_c_3way, " ;")
+        ##cat("discard fromm C 3 way", discard_from_c_3way, " ;")
         
         discard_from_c_4way<-c()
         four_ways=0
@@ -1101,8 +1100,8 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
           (beta_hat[k]*beta_hat[l])^6
         discard_from_c_4way<-c(discard_from_c_4way,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
         
-        #print("X(beta - decomposed beta for 3way)")
-        #print(beta_3way[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]-(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
+        ##print("X(beta - decomposed beta for 3way)")
+        ##print(beta_3way[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]-(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
         #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
         #gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
         #gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
@@ -1114,7 +1113,7 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
         }
         
         
-        #cat("ITER: ", i,j,k, " ;")
+        ##cat("ITER: ", i,j,k, " ;")
         
         
         X_tilde<- three_ways + four_ways
@@ -1123,15 +1122,15 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
         #- Z_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)]^2
         C<- X_main%*%beta_hat+X_2way%*%beta_2way+
           +X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] +intercept
-        # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+        # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
         # if (max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) ))>1e-1){
         
-        #cat("eta-C", eta-C, dim(matrix(X_3way[,discard_from_c_3way], ncol=1)) )
-        #print("max eta-C-X_tilde*delta")
-        #print(max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) )) )
-        #print("max eta-C-3ways*delta -4ways*delta")
-        #print("max beta separated")
-        #print(max(abs(eta-(C+matrix(X_3way[,discard_from_c_3way], ncol=1)*beta_3way[discard_from_c_3way]+
+        ##cat("eta-C", eta-C, dim(matrix(X_3way[,discard_from_c_3way], ncol=1)) )
+        ##print("max eta-C-X_tilde*delta")
+        ##print(max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) )) )
+        ##print("max eta-C-3ways*delta -4ways*delta")
+        ##print("max beta separated")
+        ##print(max(abs(eta-(C+matrix(X_3way[,discard_from_c_3way], ncol=1)*beta_3way[discard_from_c_3way]+
         #               matrix(X_4way[,discard_from_c_4way], nrow=length(eta))%*%beta_4way[discard_from_c_4way] ) ) ) )
         
         #}
@@ -1187,20 +1186,20 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
         beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
         beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
         beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-        print(length(beta_all))
+        #print(length(beta_all))
         beta_all<- matrix(beta_all, ncol=1)
         eta<-X%*%beta_all + intercept
         
         y_tilde<-y
         three_ways=0
-        #print("ok")
+        ##print("ok")
         three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(j,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[j]*beta_hat[k]*beta_hat[l])^2*
           gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
           gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
           gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]
         discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(j,k,l),l1=l1, l2=l2, l3=l3, l4=l4)) #actually just one
         assert(length(discard_from_c_3way ==1), "should discard only one three way in update delta")
-        #cat("discard fromm C 3 way", discard_from_c_3way, " ;")
+        ##cat("discard fromm C 3 way", discard_from_c_3way, " ;")
         
         discard_from_c_4way<-c()
         four_ways=0
@@ -1219,8 +1218,8 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
           (beta_hat[k]*beta_hat[l])^6
         discard_from_c_4way<-c(discard_from_c_4way,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
         
-        #print("X(beta - decomposed beta for 3way)")
-        #print(beta_3way[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]-(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
+        ##print("X(beta - decomposed beta for 3way)")
+        ##print(beta_3way[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)]-(beta_hat[i]*beta_hat[j]*beta_hat[k])^2*
         #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
         #gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
         #gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
@@ -1232,7 +1231,7 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
         }
         
         
-        #cat("ITER: ", i,j,k, " ;")
+        ##cat("ITER: ", i,j,k, " ;")
         
         
         X_tilde<- three_ways + four_ways
@@ -1241,15 +1240,15 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
         #- Z_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)]^2
         C<- X_main%*%beta_hat+X_2way%*%beta_2way+
           +X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] +intercept
-        # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+        # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
         # if (max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) ))>1e-1){
         
-        #cat("eta-C", eta-C, dim(matrix(X_3way[,discard_from_c_3way], ncol=1)) )
-        #print("max eta-C-X_tilde*delta")
-        #print(max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) )) )
-        #print("max eta-C-3ways*delta -4ways*delta")
-        #print("max beta separated")
-        #print(max(abs(eta-(C+matrix(X_3way[,discard_from_c_3way], ncol=1)*beta_3way[discard_from_c_3way]+
+        ##cat("eta-C", eta-C, dim(matrix(X_3way[,discard_from_c_3way], ncol=1)) )
+        ##print("max eta-C-X_tilde*delta")
+        ##print(max(abs(eta-(C+X_tilde*delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]) )) )
+        ##print("max eta-C-3ways*delta -4ways*delta")
+        ##print("max beta separated")
+        ##print(max(abs(eta-(C+matrix(X_3way[,discard_from_c_3way], ncol=1)*beta_3way[discard_from_c_3way]+
         #               matrix(X_4way[,discard_from_c_4way], nrow=length(eta))%*%beta_4way[discard_from_c_4way] ) ) ) )
         
         #}
@@ -1288,12 +1287,13 @@ update_delta<-function(X, y,beta_hat, gamma_hat, delta_hat, tau_hat, lambda_delt
           
           
         }
+        print("done 1 delta")
         
       }}}
   
   
   
-  
+  print("done delta")
   
   
   
@@ -1332,7 +1332,7 @@ beta_2way <- get_beta_vec_2way4(beta = beta_hat, l1=l1, l2=l2, l3=l3, l4=l4, gam
 beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
 beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
 beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
-print(length(beta_all))
+#print(length(beta_all))
 beta_all<- matrix(beta_all, ncol=1)
 eta<-X%*%beta_all + intercept
 
@@ -1355,7 +1355,7 @@ for(i in range1){
       gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)]
     }
     
-    cat("discard 2 way:", discard_from_c_2way)
+    #cat("discard 2 way:", discard_from_c_2way)
     
     
     ########################three ways
@@ -1411,11 +1411,11 @@ for(i in range1){
     X_tilde<- mains+two_ways 
     Z_tilde<- three_ways
     T_tilde<-four_ways
-    cat("disc c 2 way: ", discard_from_c_2way)
+    #cat("disc c 2 way: ", discard_from_c_2way)
     C<- intercept + X_main[,-i]%*%beta_hat[-i]+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
       X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
-    # cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
-    cat("eta- eta on parts: ", eta- (C+X_tilde*beta_hat[i] + Z_tilde*beta_hat[i]^2+T_tilde*beta_hat[i]^6 )  )
+    # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+    #cat("eta- eta on parts: ", eta- (C+X_tilde*beta_hat[i] + Z_tilde*beta_hat[i]^2+T_tilde*beta_hat[i]^6 )  )
     
     
     
@@ -1434,7 +1434,7 @@ for(i in range1){
     
     #############USE MINIMZER Q_BERN_GAMMA ##################
     beta_old_value<-beta_hat[i]
-    cat("beta old", beta_old_value)
+    #cat("beta old", beta_old_value)
     beta_hat[i] <- minimizer_Q_bern_beta(
       X=X_tilde, Z=Z_tilde, t=T_tilde, y=y_tilde, C=C, lambda=lambda_beta, beta_old = beta_old_value, weight=1, scaled=TRUE) ##intercept is in C
     #print("C1") 
@@ -1455,12 +1455,12 @@ for(i in range1){
     
     
     #if (Q_new-Q_old >=0)
-    #cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
-    print(Q_new-Q_old) ##it should be already negative or 0
+    ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+    #print(Q_new-Q_old) ##it should be already negative or 0
     
     if ( Q_new-Q_old >abs(Q_old)*1e-2){
       print("There might be numerical instability in update beta.")
-      cat(" : beta_hat is ", beta_hat[i], " beta_old is: ", beta_old_value,". ")
+      #cat(" : beta_hat is ", beta_hat[i], " beta_old is: ", beta_old_value,". ")
     }
     if ( Q_new-Q_old >=0){
       print("beta old was kept at this iteration.")
@@ -1470,125 +1470,418 @@ for(i in range1){
   }
 
 
+
+
+
+###range2
+for(j in range2){
+  
+  discard_from_c_main<-c(j) #mains   
+  mains<-matrix(X_main[,j], nrow=length(eta)) 
+  
+  #two ways
+  discard_from_c_2way<-c()
+  two_ways<-0
+  for (ik in c(range1, range3, range4)){
+    small_idx=min(ik,j)
+    big_idx=max(ik,j)
+    
+    discard_from_c_2way<-c(discard_from_c_2way, get_position_vec_from_theta_matrix4(c(small_idx,big_idx),l1=l1, l2=l2, l3=l3, l4=l4))
+    two_ways<-two_ways+X_2way[,get_position_vec_from_theta_matrix4(c(small_idx,big_idx), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[ik]* 
+      gamma_hat[get_position_vec_from_theta_matrix4(c(small_idx,big_idx), l1=l1, l2=l2 ,l3=l3, l4=l4)]
+  }
+  
+  #cat("discard 2 way:", discard_from_c_2way)
+  
+  
+  ########################three ways
+  discard_from_c_3way<-c()
+  three_ways=0
+  #print("ok")
+  
+  for(i in range1){
+    for (k in c(range3, range4)) #compute 3 ways contrib
+    {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[k])^2*
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+      gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]
+    discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}
+  for(k in range3){
+    for (l in  range4) #compute 3 ways contrib
+    {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(j,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[l]*beta_hat[k])^2*
+      gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+      gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      delta_hat[psi_table_position_to_vector_index4(c(j,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]
+    discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(j,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}
+  
+  
+  ####################### four ways
+  discard_from_c_4way<-c()
+  four_ways=0
+  for (i in range1){
+    for (k in range3) #compute 4 ways contrib
+    { for (l in range4)
+    {four_ways<-four_ways+ X_4way[,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i])^6*
+      (gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+         gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+         gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+         gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+         gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)]*
+         gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] )^2 *  
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(i,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(j,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      tau_hat[phi_table_position_to_vector_index4(c(i,j,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      (beta_hat[k]*beta_hat[l])^6
+    discard_from_c_4way<-c(discard_from_c_4way,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}}
+  
+  
+  
+  
+  X_tilde<- mains+two_ways 
+  Z_tilde<- three_ways
+  T_tilde<-four_ways
+  #cat("disc c 2 way: ", discard_from_c_2way)
+  C<- intercept + X_main[,-j]%*%beta_hat[-j]+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
+    X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
+  # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+  #cat("eta- eta on parts: ", max(abs(eta- (C+X_tilde*beta_hat[j] + Z_tilde*beta_hat[j]^2+T_tilde*beta_hat[j]^6 ))), ' ; '  )
+  
+  
+  
+  #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
+  #Z_tilde* gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)]^2) ))
+  
+  
+  
+  
+  
+  Q_old <- Q_bern(X=X,y=y, beta=beta_hat, gamma_vec=gamma_hat, delta_vec=delta_hat, tau_vec=tau_hat,
+                  lambda_beta=lambda_beta, lambda_gamma=0, lambda_delta=0, lambda_tau = 0,
+                  w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
+  
+  
+  
+  #############USE MINIMZER Q_BERN_GAMMA ##################
+  beta_old_value<-beta_hat[j]
+  #cat("beta old", beta_old_value)
+  beta_hat[j] <- minimizer_Q_bern_beta(
+    X=X_tilde, Z=Z_tilde, t=T_tilde, y=y_tilde, C=C, lambda=lambda_beta, beta_old = beta_old_value, weight=1, scaled=TRUE) ##intercept is in C
+  #print("C1") 
+  #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
+  #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
+  
+  beta_2way <- get_beta_vec_2way4(beta = beta_hat, l1=l1, l2=l2, l3=l3, l4=l4, gamma=gamma_hat, only_beta = FALSE) ###This is with delta
+  beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
+  beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
+  beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
+  #print(length(beta_all))
+  beta_all<- matrix(beta_all, ncol=1)
+  eta<-X%*%beta_all + intercept
+  
+  Q_new <- Q_bern(X=X,y=y, beta=beta_hat, gamma_vec=gamma_hat, delta_vec=delta_hat, tau_vec=tau_hat,
+                  lambda_beta=lambda_beta, lambda_gamma=0, lambda_delta=0, lambda_tau = 0,
+                  w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
+  
+  
+  #if (Q_new-Q_old >=0)
+  ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+  #print(Q_new-Q_old) ##it should be already negative or 0
+  
+  if ( Q_new-Q_old >abs(Q_old)*1e-2){
+    print("There might be numerical instability in update beta.")
+    #cat(" : beta_hat is ", beta_hat[j], " beta_old is: ", beta_old_value,". ")
+  }
+  if ( Q_new-Q_old >=0){
+    print("beta old was kept at this iteration.")
+    print(Q_new-Q_old)
+    beta_hat[j]<-beta_old_value
+  }
+}
+
+
+
+
+###range3
+for(k in range3){
+  
+  discard_from_c_main<-c(k) #mains   
+  mains<-matrix(X_main[,k], nrow=length(eta)) 
+  
+  #two ways
+  discard_from_c_2way<-c()
+  two_ways<-0
+  for (il in c(range1, range2, range4)){
+    small_idx=min(il,k)
+    big_idx=max(il,k)
+    
+    discard_from_c_2way<-c(discard_from_c_2way, get_position_vec_from_theta_matrix4(c(small_idx,big_idx),l1=l1, l2=l2, l3=l3, l4=l4))
+    two_ways<-two_ways+X_2way[,get_position_vec_from_theta_matrix4(c(small_idx,big_idx), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[il]* 
+      gamma_hat[get_position_vec_from_theta_matrix4(c(small_idx,big_idx), l1=l1, l2=l2 ,l3=l3, l4=l4)]
+  }
+  
+  #cat("discard 2 way:", discard_from_c_2way)
+  
+  
+  ########################three ways
+  discard_from_c_3way<-c()
+  three_ways=0
+  #print("ok")
+  
+  for(i in c(range1, range2) ){
+    for (l in  range4) #compute 3 ways contrib
+    {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[l])^2*
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+      gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      delta_hat[psi_table_position_to_vector_index4(c(i,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]
+    discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(i,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}
+  for(i in range1){
+    for (j in  range2) #compute 3 ways contrib
+    {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j])^2*
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]
+    discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(i,j,k),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}
+  
+  
+  ####################### four ways
+  discard_from_c_4way<-c()
+  four_ways=0
+  for (i in range1){
+    for (j in range2) #compute 4 ways contrib
+    { for (l in range4)
+    {four_ways<-four_ways+ X_4way[,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i])^6*
+      (gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+         gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+         gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+         gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+         gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)]*
+         gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] )^2 *  
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(i,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(j,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      tau_hat[phi_table_position_to_vector_index4(c(i,j,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      (beta_hat[j]*beta_hat[l])^6
+    discard_from_c_4way<-c(discard_from_c_4way,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}}
+  
+  
+  
+  
+  X_tilde<- mains+two_ways 
+  Z_tilde<- three_ways
+  T_tilde<-four_ways
+  #cat("disc c 2 way: ", discard_from_c_2way)
+  C<- intercept + X_main[,-k]%*%beta_hat[-k]+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
+    X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
+  # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+  #cat("eta- eta on parts: ", max(abs(eta- (C+X_tilde*beta_hat[k] + Z_tilde*beta_hat[k]^2+T_tilde*beta_hat[k]^6 ))), ' ; '  )
+  
+  
+  
+  #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
+  #Z_tilde* gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)]^2) ))
+  
+  
+  
+  
+  
+  Q_old <- Q_bern(X=X,y=y, beta=beta_hat, gamma_vec=gamma_hat, delta_vec=delta_hat, tau_vec=tau_hat,
+                  lambda_beta=lambda_beta, lambda_gamma=0, lambda_delta=0, lambda_tau = 0,
+                  w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
+  
+  
+  
+  #############USE MINIMZER Q_BERN_GAMMA ##################
+  beta_old_value<-beta_hat[k]
+  #cat("beta old", beta_old_value)
+  beta_hat[k] <- minimizer_Q_bern_beta(
+    X=X_tilde, Z=Z_tilde, t=T_tilde, y=y_tilde, C=C, lambda=lambda_beta, beta_old = beta_old_value, weight=1, scaled=TRUE) ##intercept is in C
+  #print("C1") 
+  #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
+  #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
+  
+  beta_2way <- get_beta_vec_2way4(beta = beta_hat, l1=l1, l2=l2, l3=l3, l4=l4, gamma=gamma_hat, only_beta = FALSE) ###This is with delta
+  beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
+  beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
+  beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
+  #print(length(beta_all))
+  beta_all<- matrix(beta_all, ncol=1)
+  eta<-X%*%beta_all + intercept
+  
+  Q_new <- Q_bern(X=X,y=y, beta=beta_hat, gamma_vec=gamma_hat, delta_vec=delta_hat, tau_vec=tau_hat,
+                  lambda_beta=lambda_beta, lambda_gamma=0, lambda_delta=0, lambda_tau = 0,
+                  w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
+  
+  
+  #if (Q_new-Q_old >=0)
+  ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+  print(Q_new-Q_old) ##it should be already negative or 0
+  
+  if ( Q_new-Q_old >abs(Q_old)*1e-2){
+    print("There might be numerical instability in update beta.")
+    #cat(" : beta_hat is ", beta_hat[k], " beta_old is: ", beta_old_value,". ")
+  }
+  if ( Q_new-Q_old >=0){
+    print("beta old was kept at this iteration.")
+    print(Q_new-Q_old)
+    beta_hat[k]<-beta_old_value
+  }
+}
+
+
+
+
+
+
+###range4
+for(l in range4){
+  
+  discard_from_c_main<-c(l) #mains   
+  mains<-matrix(X_main[,l], nrow=length(eta)) 
+  
+  #two ways
+  discard_from_c_2way<-c()
+  two_ways<-0
+  for (i in c(range1, range2, range3)){
+
+    discard_from_c_2way<-c(discard_from_c_2way, get_position_vec_from_theta_matrix4(c(i,l),l1=l1, l2=l2, l3=l3, l4=l4))
+    two_ways<-two_ways+X_2way[,get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)]*beta_hat[i]* 
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)]
+  }
+  
+  #cat("discard 2 way:", discard_from_c_2way)
+  
+  
+  ########################three ways
+  discard_from_c_3way<-c()
+  three_ways=0
+  #print("ok")
+  
+  for(i in c(range1, range2) ){
+    for (k in  range3) #compute 3 ways contrib
+    {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[k])^2*
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+      gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      delta_hat[psi_table_position_to_vector_index4(c(i,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]
+    discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(i,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}
+  for(i in range1){
+    for (j in  range2) #compute 3 ways contrib
+    {three_ways<-three_ways+ X_3way[,psi_table_position_to_vector_index4(c(i,j,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i]*beta_hat[j])^2*
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+      gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,l), l1=l1, l2=l2, l3=l3, l4=l4)]
+    discard_from_c_3way<-c(discard_from_c_3way,psi_table_position_to_vector_index4(c(i,j,l),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}
+  
+  
+  ####################### four ways
+  discard_from_c_4way<-c()
+  four_ways=0
+  for (i in range1){
+    for (j in range2) #compute 4 ways contrib
+    { for (k in range3)
+    {four_ways<-four_ways+ X_4way[,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4)]*(beta_hat[i])^6*
+      (gamma_hat[get_position_vec_from_theta_matrix4(c(i,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+         gamma_hat[get_position_vec_from_theta_matrix4(c(i,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+         gamma_hat[get_position_vec_from_theta_matrix4(c(j,k), l1=l1, l2=l2 ,l3=l3, l4=l4)] *  
+         gamma_hat[get_position_vec_from_theta_matrix4(c(j,l), l1=l1, l2=l2 ,l3=l3, l4=l4)] *
+         gamma_hat[get_position_vec_from_theta_matrix4(c(k,l), l1=l1, l2=l2 ,l3=l3, l4=l4)]*
+         gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2 ,l3=l3, l4=l4)] )^2 *  
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,k), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(i,j,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(i,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      delta_hat[psi_table_position_to_vector_index4(c(j,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      tau_hat[phi_table_position_to_vector_index4(c(i,j,k,l), l1=l1, l2=l2, l3=l3, l4=l4)]*
+      (beta_hat[j]*beta_hat[k])^6
+    discard_from_c_4way<-c(discard_from_c_4way,phi_table_position_to_vector_index4(c(i,j,k,l),l1=l1, l2=l2, l3=l3, l4=l4))
+    }}}
+  
+  
+  
+  
+  X_tilde<- mains+two_ways 
+  Z_tilde<- three_ways
+  T_tilde<-four_ways
+  #cat("disc c 2 way: ", discard_from_c_2way)
+  C<- intercept + X_main[,-l]%*%beta_hat[-l]+X_2way[,-discard_from_c_2way]%*%beta_2way[-discard_from_c_2way] +
+    X_3way[,-discard_from_c_3way]%*%beta_3way[-discard_from_c_3way]+  X_4way[,-discard_from_c_4way]%*%beta_4way[-discard_from_c_4way] 
+  # #cat("C1-C:", max(abs(C1-C)), " " , sum(abs(C1-C)), " ")
+  #cat("eta- eta on parts: ", max(abs(eta- (C+X_tilde*beta_hat[l] + Z_tilde*beta_hat[l]^2+T_tilde*beta_hat[l]^6 ))), ' ; '  )
+  
+  
+  
+  #assert(" eta-C- rest shoould be 0: ",  max(abs(eta-C-X_tilde*gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] -
+  #Z_tilde* gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)]^2) ))
+  
+  
+  
+  
+  
+  Q_old <- Q_bern(X=X,y=y, beta=beta_hat, gamma_vec=gamma_hat, delta_vec=delta_hat, tau_vec=tau_hat,
+                  lambda_beta=lambda_beta, lambda_gamma=0, lambda_delta=0, lambda_tau = 0,
+                  w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
+  
+  
+  
+  #############USE MINIMZER Q_BERN_GAMMA ##################
+  beta_old_value<-beta_hat[l]
+  #cat("beta old", beta_old_value)
+  beta_hat[l] <- minimizer_Q_bern_beta(
+    X=X_tilde, Z=Z_tilde, t=T_tilde, y=y_tilde, C=C, lambda=lambda_beta, beta_old = beta_old_value, weight=1, scaled=TRUE) ##intercept is in C
+  #print("C1") 
+  #gamma_hat[get_position_vec_from_theta_matrix4(c(i,j), l1=l1, l2=l2, l3=l3, l4=l4)] <- minimizer_Q_bern_gamma(
+  #X=X_tilde, Z=Z_tilde, y=y_tilde, C=C, lambda=lambda_gamma, beta_old = gamma_old_value, weight=1, scaled=TRUE) ##intercept is in C
+  
+  beta_2way <- get_beta_vec_2way4(beta = beta_hat, l1=l1, l2=l2, l3=l3, l4=l4, gamma=gamma_hat, only_beta = FALSE) ###This is with delta
+  beta_3way <- get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta=delta_hat, only_beta = FALSE) #This is with gamma WITH delta
+  beta_4way <- get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau=tau_hat, only_beta = FALSE) #This is  WITH tau
+  beta_all<-c(beta_hat, beta_2way, beta_3way, beta_4way)
+  #print(length(beta_all))
+  beta_all<- matrix(beta_all, ncol=1)
+  eta<-X%*%beta_all + intercept
+  
+  Q_new <- Q_bern(X=X,y=y, beta=beta_hat, gamma_vec=gamma_hat, delta_vec=delta_hat, tau_vec=tau_hat,
+                  lambda_beta=lambda_beta, lambda_gamma=0, lambda_delta=0, lambda_tau = 0,
+                  w_beta=1, w_gamma=1, w_delta=1, w_tau=1, l1=l1,l2=l2,l3=l3,l4=l4, already_multiplied=TRUE, intercept = intercept)
+  
+  
+  #if (Q_new-Q_old >=0)
+  ##cat(" new-old: ",Q_new-Q_old, " Q: ",Q_new)
+  #print(Q_new-Q_old) ##it should be already negative or 0
+  
+  if ( Q_new-Q_old >abs(Q_old)*1e-2){
+    print("There might be numerical instability in update beta.")
+    #cat(" : beta_hat is ", beta_hat[l], " beta_old is: ", beta_old_value,". ")
+  }
+  if ( Q_new-Q_old >=0){
+    print("beta old was kept at this iteration.")
+    print(Q_new-Q_old)
+    beta_hat[l]<-beta_old_value
+  }
+}
+
+
+
 return(beta_hat)
 }
 
 
 
 
-#### TESTS UPDATES  ################################################################################333
 
-#source("Create_synthetic_datasets.R")
-
-###test update delta
-data<- create_basic_GLM_4way ()
-X<- data$X
-y<- data$y$true
-
-beta_true<- data$beta[-1,]
-intercept<- data$beta[1,]
-l1=4
-l2=3
-l3=2
-l4=1
-
-
-
-beta_main<-beta_true[1:(l1+l2+l3+l4)]
-beta_2way<-beta_true[unlist(get_ranges4(l1,l2,l3,l4)[2])]
-beta_3way<-beta_true[unlist(get_ranges4(l1,l2,l3,l4)[3])]
-beta_4way<-beta_true[unlist(get_ranges4(l1,l2,l3,l4)[4])]
-
-beta_hat<-beta_main
-
-beta_2way_without_gamma<-get_beta_vec_2way4(beta = beta_main, l1=l1, l2=l2, l3=l3, l4=l4, gamma=NULL, only_beta = TRUE )
-gamma_true<-beta_2way/beta_2way_without_gamma
-gamma_true[is.nan(gamma_true)]<-0
-gamma_hat<-gamma_true
-
-beta_3way_without_gamma<-get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta = NULL, only_beta = TRUE)
-delta_true<-beta_3way/beta_3way_without_gamma
-delta_true[is.nan(delta_true)]<-0
-delta_hat<-delta_true
-
-beta_4way_without_tau<-get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau = NULL, only_beta = TRUE)
-tau_true<-beta_4way/beta_4way_without_tau
-tau_true[is.nan(tau_true)]<-0
-tau_hat<-tau_true*1
-
-
-
-#################### TESTS #############################
-
-
-beta_hat<-beta_main
-beta_hat[1]<--5
-
-beta_pred<-update_beta(X=X, y=y, beta_hat=beta_hat, gamma_hat=gamma_hat, delta_hat=delta_hat, tau_hat=tau_hat, lambda_beta=1e-3,
-                     l1=l1,l2=l2,l3=l3,l4=l4, intercept=intercept)
-
-print("beta_pred")
-print(beta_pred)
-print("beta true")
-print(beta_main)
-
-
-rownames(X)
-
-
-
-tau_pred<-update_tau(X=X, y=y, beta_hat=beta_hat, gamma_hat=gamma_hat, delta_hat=delta_hat, tau_hat=tau_hat, lambda_tau=0,
-                     l1=l1,l2=l2,l3=l3,l4=l4, intercept=intercept, bind_C=FALSE)
-
-print("tau_pred")
-print(tau_pred)
-print("tau true")
-print(tau_true)
-
-print(length(delta_true))
-
-intercept_pred<-update_intercept(X=X, y=y, beta_all=beta_true, intercept_old=intercept*0.1) #function to find the minimum for intercept
-
-print("intercept_pred")
-print(intercept_pred)
-print("intercept true")
-print(intercept)
-
-print(length(gamma_true))
-
-ok=0
-improvement_total<-0
-for (it in c(1:50))
-{ 
-
-gamma_hat<-gamma_true
-#gamma_hat[1]<-1
-noise_scale<-runif(length(gamma_true), 0,2)
-gamma_hat<-noise_scale*gamma_hat
-gamma_pred<-update_gamma(X=X, y=y, beta_hat=beta_main, gamma_hat=gamma_hat, delta_hat=delta_hat, tau_hat = tau_hat, 
-                         lambda_gamma=1e-4, l1=l1,l2=l2,l3=l3,l4=l4, w=1, intercept=intercept) 
-
-print("gamma before")
-print(gamma_hat)
-print("gamma_pred")
-print(gamma_pred)
-print("gamma true")
-print(gamma_true)
-
-
-print('error before')
-print(sum(abs(gamma_hat-gamma_true)))
-print("error after")
-print(sum(abs(gamma_pred-gamma_true)))
-
-
-improvement_total<- improvement_total + ( sum(abs(gamma_hat-gamma_true)) - sum(abs(gamma_pred-gamma_true)) )
-if (sum(abs(gamma_pred-gamma_true)) < sum(abs(gamma_hat-gamma_true)) )
-  
-{ok<-ok+1}
-
-}
-
-print(ok)
-print(improvement_total)
 

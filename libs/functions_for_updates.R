@@ -3,6 +3,9 @@ source("Combinatorics.R")
 source("Create_synthetic_datasets.R")
 library(glmnet)
 
+compute_rel_dif<-function(Q_old, Q_new)
+{rel_dif<- abs(Q_old-Q_new)/abs(Q_old)
+return(rel_dif)}
 
 Soft_thresholding <- function(c, lambda) {
   assert <- function(condition, message) {
@@ -246,6 +249,63 @@ irlasso.cb <- function(X, Y, lambda, w.lambda=NULL, beta0=NULL,
 
 
 
+cross_validation_irlasso.cb <- function(X, y, lambda_values, l1, l2, l3, l4, k = 3, split_percentage = 0.7) {
+  best_lambda <- NULL
+  best_R2score <- -Inf
+  lambda_scores <- numeric(length(lambda_values))
+  
+  # Perform k random splits
+  for (i in 1:k) {
+    # Split the data
+    # Change seed for each split to ensure different splits
+    split_result <- split_data_basic(X=X, y=y, p=split_percentage)
+    X_train <- split_result$X_train
+    y_train <- split_result$y_train
+    X_test <- split_result$X_test
+    y_test <- split_result$y_test
+    j=0
+    for (lambda in lambda_values) {
+      j<-j+1
+      print(lambda)
+      
+      res_lasso <- irlasso.cb(X=X_train, Y=y_train, lambda=lambda, w.lambda=NULL, beta0=NULL,
+                              centering=FALSE, scaling=FALSE, intercept=T,
+                              maxit=10, tol=0.0545, sd.tol=1e-6,
+                              verbose=F)
+      
+      coefs_lasso <- array(res_lasso$beta[-1,1,1])
+      interc <- res_lasso$beta[1,1,1]
+      pred_test <- kappa1(interc + X_test %*% coefs_lasso)
+      plot(pred_test, y_test, xlab = "Predicted Yield", ylab = "True Yield", main = "Predicted vs True Yield")
+      #plot(pred_test, y_test, xlab = "Predictions", ylab = "True Values", main = "Predictions vs True Values")
+      abline(a = 0, b = 1, col = "red")
+      
+      
+      
+      
+      
+      # Compute the R2 score
+      R2 <- r2(y_test, pred_test)
+      
+      # Store the R2 score for the current lambda
+      lambda_scores[j] <- lambda_scores[j] + R2
+    }
+  }
+  
+  # Average the scores across the k splits
+  lambda_scores <- lambda_scores / k
+  
+  # Find the best lambda
+  best_index <- which.max(lambda_scores)
+  best_lambda <- lambda_values[best_index]
+  best_R2score <- lambda_scores[best_index]
+  print(lambda_values)
+  print(lambda_scores)
+  
+  return(list("best_lambda" = best_lambda, "best_R2score" = best_R2score))
+}
+
+
 
 #### CONTRIBUTION FUNCTIONS ####
 
@@ -344,7 +404,7 @@ get_penalty<-function(vector, weights, lambda, already_weighted=TRUE){
 Q_bern<-function(X,y, beta, gamma_vec, delta_vec, tau_vec, lambda_beta, lambda_gamma, lambda_delta, lambda_tau, w_beta, w_gamma, w_delta, w_tau,
                  l1=21,l2=14,l3=2,l4=3, already_multiplied=TRUE, scaled=TRUE, intercept=0)
 { if (length(beta)== l1 +l2+l3+l4)
-{print("Beta was given only main and computed for the rest")
+{#print("Beta was given only main and computed for the rest")
   already_multiplied = TRUE
   beta_2way<-get_beta_vec_2way4(beta = beta, l1=l1, l2=l2, l3=l3, l4=l4, gamma= gamma_vec, only_beta = FALSE )
   beta_3way<-get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta = delta_vec, only_beta = FALSE)
@@ -371,7 +431,7 @@ Q_bern<-function(X,y, beta, gamma_vec, delta_vec, tau_vec, lambda_beta, lambda_g
   if(scaled==TRUE) ############# CHECK THIS ###########################
   {log.like<-log.like/(2*dim(X)[1])}
   loss<- -log.like+penalty_beta+penalty_gamma+penalty_delta+penalty_tau
-  cat("log.like,", log.like, '  ',penalty_beta,' ',penalty_gamma,' ',penalty_delta, ' ', penalty_tau )
+  #cat("log.like,", log.like, '  ',penalty_beta,' ',penalty_gamma,' ',penalty_delta, ' ', penalty_tau )
   return(loss)
 }
 
@@ -417,7 +477,7 @@ minimizer_Q_bern_delta<-function(X,y, C, lambda, beta_old, weight=1, scaled=TRUE
   #cat("interval",interval)
   result_optimize <- optimize(fct, interval = interval )
   minimum<-result_optimize$minimum
-  cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
+  #cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
   
   f_0<-fct(0)
   if ( f_0 <= fct(minimum) & f_0 <=fct(beta_old))
@@ -453,7 +513,7 @@ minimizer_Q_bern_gamma<-function(X,Z,y, C, lambda, beta_old, weight=1, scaled=TR
   #cat("interval",interval)
   result_optimize <- optimize(fct, interval = interval )
   minimum<-result_optimize$minimum
-  cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
+  #cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
   
   f_0<-fct(0)
   if ( f_0 <= fct(minimum) & f_0 <=fct(beta_old))
@@ -485,11 +545,11 @@ minimizer_Q_bern_beta<-function(X,Z,t,y, C, lambda, beta_old, weight=1, scaled=T
     return(loss)
   }
   #fct(1)
-  interval<-c(min(-beta_old/2 -5e-1, 5*beta_old/2 -5e-1), max(-beta_old/2 +5e-1, 5*beta_old/2 + 5e-1 ) )
+  interval<-c(min(-beta_old/5 -5e-1, 2*beta_old -5e-1), max(-beta_old/5 +5e-1, 2*beta_old + 5e-1 ) )
   #cat("interval",interval)
   result_optimize <- optimize(fct, interval = interval )
   minimum<-result_optimize$minimum
-  cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
+ # cat(" old: ",fct(beta_old) , " mimimum ", fct(minimum))
   
   f_0<-fct(0)
   if ( f_0 <= fct(minimum) & f_0 <=fct(beta_old))

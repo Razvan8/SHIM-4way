@@ -1,0 +1,165 @@
+#### TESTS UPDATES  ################################################################################333
+
+#source("Create_synthetic_datasets.R")
+
+###test update delta
+data<- create_basic_GLM_4way ()
+X<- data$X
+y<- data$y$true
+
+beta_true<- data$beta[-1,]
+intercept<- data$beta[1,]
+l1=4
+l2=3
+l3=2
+l4=1
+
+
+
+beta_main<-beta_true[1:(l1+l2+l3+l4)]
+beta_2way<-beta_true[unlist(get_ranges4(l1,l2,l3,l4)[2])]
+beta_3way<-beta_true[unlist(get_ranges4(l1,l2,l3,l4)[3])]
+beta_4way<-beta_true[unlist(get_ranges4(l1,l2,l3,l4)[4])]
+
+beta_hat<-beta_main
+
+beta_2way_without_gamma<-get_beta_vec_2way4(beta = beta_main, l1=l1, l2=l2, l3=l3, l4=l4, gamma=NULL, only_beta = TRUE )
+gamma_true<-beta_2way/beta_2way_without_gamma
+gamma_true[is.nan(gamma_true)]<-0
+gamma_hat<-gamma_true
+
+beta_3way_without_gamma<-get_beta_vec_3way4(beta_2way = beta_2way, l1=l1, l2=l2, l3=l3, l4=l4, delta = NULL, only_beta = TRUE)
+delta_true<-beta_3way/beta_3way_without_gamma
+delta_true[is.nan(delta_true)]<-0
+delta_hat<-delta_true
+
+beta_4way_without_tau<-get_beta_vec_4way4(beta_3way = beta_3way, l1=l1, l2=l2, l3=l3, l4=l4, tau = NULL, only_beta = TRUE)
+tau_true<-beta_4way/beta_4way_without_tau
+tau_true[is.nan(tau_true)]<-0
+tau_hat<-tau_true*1
+
+
+
+#################### TESTS #############################
+
+
+beta_hat<-beta_main
+beta_hat[1]<--5
+
+beta_pred<-update_beta(X=X, y=y, beta_hat=beta_hat, gamma_hat=gamma_hat, delta_hat=delta_hat, tau_hat=tau_hat, lambda_beta=4e-2,
+                     l1=l1,l2=l2,l3=l3,l4=l4, intercept=intercept)
+
+print("beta_pred")
+print(beta_pred)
+print("beta true")
+print(beta_main)
+
+
+beta_true<-beta_main
+
+
+ok=0
+improvement_total<-0
+for (it in c(1:50))
+{ 
+  
+  beta_hat<- beta_true
+  #gamma_hat[1]<-1
+  noise_scale<-runif(length(beta_true), 0.2,30)
+  beta_hat<-beta_hat
+  beta_pred<-update_beta(X=X, y=y, beta_hat=beta_main, gamma_hat=gamma_hat, delta_hat=delta_hat*3, tau_hat = tau_hat, 
+                           lambda_beta=1e-4, l1=l1,l2=l2,l3=l3,l4=l4, w=1, intercept=intercept) 
+  
+  print("beta before")
+  print(beta_hat)
+  print("beta_pred")
+  print(beta_pred)
+  print("beta true")
+  print(beta_true)
+  
+  
+  print('error before')
+  print(sum(abs(beta_hat-beta_true)))
+  print("error after")
+  print(sum(abs(beta_pred-beta_true)))
+  
+  
+  improvement_total<- improvement_total + ( sum(abs(beta_hat-beta_true)) - sum(abs(beta_pred-beta_true)) )
+  if (sum(abs(beta_pred-beta_true)) < sum(abs(beta_hat-beta_true)) )
+    
+  {ok<-ok+1}
+  
+}
+
+print(ok)
+print(improvement_total)
+
+
+
+
+print("beta_pred")
+print(beta_pred)
+print("beta true")
+print(beta_main)
+
+
+
+
+
+
+
+
+tau_pred<-update_tau(X=X, y=y, beta_hat=beta_hat, gamma_hat=gamma_hat, delta_hat=delta_hat, tau_hat=tau_hat, lambda_tau=0,
+                     l1=l1,l2=l2,l3=l3,l4=l4, intercept=intercept, bind_C=FALSE)
+
+print("tau_pred")
+print(tau_pred)
+print("tau true")
+print(tau_true)
+
+print(length(delta_true))
+
+intercept_pred<-update_intercept(X=X, y=y, beta_all=beta_true, intercept_old=intercept*0.1) #function to find the minimum for intercept
+
+print("intercept_pred")
+print(intercept_pred)
+print("intercept true")
+print(intercept)
+
+print(length(gamma_true))
+
+ok=0
+improvement_total<-0
+for (it in c(1:50))
+{ 
+
+gamma_hat<-gamma_true
+#gamma_hat[1]<-1
+noise_scale<-runif(length(gamma_true), 0,2)
+gamma_hat<-noise_scale*gamma_hat
+gamma_pred<-update_gamma(X=X, y=y, beta_hat=beta_main, gamma_hat=gamma_hat, delta_hat=delta_hat, tau_hat = tau_hat, 
+                         lambda_gamma=1e-4, l1=l1,l2=l2,l3=l3,l4=l4, w=1, intercept=intercept) 
+
+print("gamma before")
+print(gamma_hat)
+print("gamma_pred")
+print(gamma_pred)
+print("gamma true")
+print(gamma_true)
+
+
+print('error before')
+print(sum(abs(gamma_hat-gamma_true)))
+print("error after")
+print(sum(abs(gamma_pred-gamma_true)))
+
+
+improvement_total<- improvement_total + ( sum(abs(gamma_hat-gamma_true)) - sum(abs(gamma_pred-gamma_true)) )
+if (sum(abs(gamma_pred-gamma_true)) < sum(abs(gamma_hat-gamma_true)) )
+  
+{ok<-ok+1}
+
+}
+
+print(ok)
+print(improvement_total)
